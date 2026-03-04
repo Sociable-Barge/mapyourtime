@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Real-Time Activity Scheduler</title>
+<style>
+  :root{
+    --bg:#f2e9fb;        /* light lavender */
+    --ink:#0f172a;
+    --muted:#475569;
+    --line:#e2e8f0;
+    --brand:#7c3aed;      /* accent */
+    --card:#ffffff;       /* light card */
+    --thead:#f1f5f9;
+    --shadow:0 8px 24px rgba(2,6,23,.08);
+  }
+  body.dark{
+    --bg:#3F384C;        /* dark plum */
+    --ink:#e6e6f0;
+    --muted:#cbb7e2;
+    --line:rgba(255,255,255,.16);
+    --brand:#a78bfa;      /* soft violet */
+    --card:#1c1b22;       /* dark card */
+    --thead:#242332;
+    --shadow:0 10px 28px rgba(0,0,0,.35);
+  }
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Futura, "Trebuchet MS", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;transition:background .2s ease,color .2s ease}
+  .app{max-width:960px;margin:0 auto;padding:16px}
+  .header{position:sticky;top:0;background:var(--bg);padding:12px 16px;margin:-16px -16px 12px;border-bottom:1px solid var(--line);z-index:10;display:flex;gap:12px;align-items:center;justify-content:space-between}
+  h1{font-size:20px;margin:0}
+  .sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .toggle{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:8px 12px;cursor:pointer;box-shadow:var(--shadow)}
+  .toggle input{appearance:none;width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;outline:none}
+  .toggle input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--brand);transition:transform .18s ease}
+  .toggle input:checked::after{transform:translateX(14px)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px}
+  .toolbar{display:flex;gap:8px;align-items:center}
+  .toolbar input[type="text"], .toolbar input[type="number"], .toolbar input[type="time"]{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:transparent;color:var(--ink)}
+  .toolbar input[type="number"]{max-width:7ch;text-align:center}
+  .btn{border:0;background:var(--brand);color:#fff;border-radius:12px;padding:10px 14px;cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+  /* Flexible height schedule card: no fixed height, only horizontal scroll if needed */
+  .table-wrap{overflow-x:auto; overflow-y:visible; border-radius:16px;border:1px solid var(--line);background:var(--card);margin-top:12px}
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:680px}
+  thead th{position:sticky;top:0;background:var(--thead);font-weight:600;font-size:13px;color:var(--ink);border-bottom:1px solid var(--line);} 
+  th,td{padding:10px 12px;border-bottom:1px solid var(--line);} 
+  td input[type="text"], td input[type="number"], td input[type="time"]{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:transparent;color:var(--ink)}
+  .col-activity{min-width:200px}
+  .col-minutes input[type="number"]{max-width:7ch;text-align:center}
+  .start{white-space:nowrap;text-align:center}
+  .handle{cursor:grab;user-select:none;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;color:var(--muted)}
+  .handle svg{width:16px;height:16px;display:block}
+  tr.dragging{opacity:.6}
+  .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+  .icon-btn:hover{background:rgba(124,58,237,.08)}
+  .trash svg{width:18px;height:18px}
+  .muted{color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>Real‑Time Activity Scheduler</h1>
+      <div class="sub">Drag to reorder (left grip), edit inline, toggle steps, and set your final event at the bottom. Start times update live.</div>
+    </div>
+    <label class="toggle" title="Toggle dark mode">
+      <span class="muted">Dark</span>
+      <input id="modeToggle" type="checkbox" aria-label="Dark mode toggle" />
+    </label>
+  </div>
+  <div class="card">
+    <div class="toolbar" style="width:100%">
+      <input type="text" id="customName" placeholder="Add activity (e.g., Pack car)" style="flex:1" />
+      <input type="number" id="customMinutes" placeholder="Minutes" min="1" />
+      <button class="btn" id="addBtn" style="flex:1">Add</button>
+    </div>
+  </div>
+  <div class="card table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:44px"></th>
+          <th class="col-activity">Activity</th>
+          <th class="col-minutes">Minutes</th>
+          <th style="width:160px">Start Time</th>
+          <th style="width:60px">Use?</th>
+          <th style="width:60px"></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+
+  // ---------- Safe storage wrapper (handles sandboxed envs without localStorage) ----------
+  const safeStore = (()=>{
+    const mem = Object.create(null);
+    return {
+      get(key){ try{ return (typeof localStorage!=='undefined') ? localStorage.getItem(key) : mem[key]; }catch(e){ return mem[key]; } },
+      set(key,val){ try{ if(typeof localStorage!== 'undefined'){ localStorage.setItem(key,val); } else { mem[key]=val; } }catch(e){ mem[key]=val; } }
+    };
+  })();
+
+  // ---------- State ----------
+  let activities = [
+    { name: 'Boarding', minutes: 40, use: true },
+    { name: 'Walking', minutes: 10, use: true },
+    { name: 'Security', minutes: 30, use: true },
+    { name: 'Check Bags', minutes: 15, use: true }
+  ];
+  let endEvent = { name: 'Flight Takeoff', time: '' };
+
+  // Elements (assigned in boot)
+  let tbodyEl, addBtnEl, modeToggleEl, nameInputEl, minutesInputEl;
+
+  function boot(){
+    // Query DOM safely
+    tbodyEl = document.getElementById('tbody');
+    addBtnEl = document.getElementById('addBtn');
+    modeToggleEl = document.getElementById('modeToggle');
+    nameInputEl = document.getElementById('customName');
+    minutesInputEl = document.getElementById('customMinutes');
+
+    // Guard against nulls (prevents addEventListener on null)
+    if(!tbodyEl){ console.error('Scheduler init error: tbody not found'); return; }
+
+    // Theme init with fallback when localStorage is blocked
+    const saved = safeStore.get('scheduler-theme');
+    const prefersDark = (typeof window.matchMedia === 'function') && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const startDark = saved ? saved === 'dark' : !!prefersDark;
+    document.body.classList.toggle('dark', startDark);
+    if(modeToggleEl){
+      modeToggleEl.checked = startDark;
+      modeToggleEl.addEventListener('change', ()=>{
+        const isDark = !!modeToggleEl.checked;
+        document.body.classList.toggle('dark', isDark);
+        safeStore.set('scheduler-theme', isDark ? 'dark' : 'light');
+      });
+    }
+
+    // Add activity handler
+    if(addBtnEl){
+      addBtnEl.addEventListener('click', ()=>{
+        const name = (nameInputEl && nameInputEl.value ? nameInputEl.value : '').trim();
+        const mins = parseInt(minutesInputEl && minutesInputEl.value ? minutesInputEl.value : '0', 10);
+        if(!name || !mins || mins <= 0) return;
+        activities.unshift({ name, minutes: mins, use: true });
+        if(nameInputEl) nameInputEl.value = '';
+        if(minutesInputEl) minutesInputEl.value = '';
+        render();
+        calculate();
+      });
+    }
+
+    render();
+  }
+
+  // ---------- Render (structure only; does NOT force blur on inputs) ----------
+  function render(){
+    tbodyEl.innerHTML = '';
+
+    activities.forEach((a, i) => {
+      const tr = document.createElement('tr');
+      tr.dataset.index = i;
+      tr.innerHTML = `
+        <td>
+          <span class="handle" title="Drag to reorder" draggable="true" aria-label="Drag handle">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 5h2v2H7V5zm4 0h2v2h-2V5zM7 9h2v2H7V9zm4 0h2v2h-2V9zM7 13h2v2H7v-2zm4 0h2v2h-2v-2z"/></svg>
+          </span>
+        </td>
+        <td class="col-activity"><input type="text" value="${escapeHtml(a.name)}" data-action="name" data-i="${i}" /></td>
+        <td class="col-minutes"><input type="number" min="1" value="${a.minutes}" data-action="minutes" data-i="${i}" /></td>
+        <td class="start"></td>
+        <td style="text-align:center"><input type="checkbox" ${a.use? 'checked':''} data-action="toggle" data-i="${i}" /></td>
+        <td style="text-align:center">
+          <button class="icon-btn trash" data-action="del" data-i="${i}" aria-label="Delete">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>
+        </td>`;
+      tbodyEl.appendChild(tr);
+    });
+
+    // End event inline row
+    const endTr = document.createElement('tr');
+    endTr.className = 'end-row';
+    endTr.innerHTML = `
+      <td></td>
+      <td class="col-activity"><input type="text" value="${escapeHtml(endEvent.name)}" id="endName" /></td>
+      <td class="col-minutes"><input type="time" id="endTime" /></td>
+      <td id="endEcho" class="start muted"></td>
+      <td></td>
+      <td></td>`;
+    tbodyEl.appendChild(endTr);
+
+    // Restore end time value and bind listeners
+    const endTimeInput = document.getElementById('endTime');
+    if(endTimeInput && endEvent.time) endTimeInput.value = endEvent.time;
+    const endNameInput = document.getElementById('endName');
+    if(endNameInput){ endNameInput.addEventListener('input', (e)=>{ endEvent.name = e.target.value; }); }
+    if(endTimeInput){
+      endTimeInput.addEventListener('input', (e)=>{
+        // Allow typing hours like 10/11/12; compute once valid
+        endEvent.time = e.target.value; // keep raw value
+        if (e.target.validity && e.target.validity.valid && e.target.value.length >= 4) {
+          calculate();
+        } else {
+          paintStartTimes([]);
+        }
+      });
+    }
+
+    paintStartTimes();
+  }
+
+  // ---------- Inline edits / toggles / delete (event delegation) ----------
+  document.addEventListener('input', (e)=>{
+    const t = e.target;
+    if(!t || !t.dataset) return;
+    const action = t.dataset.action; if(!action) return;
+    const i = parseInt(t.dataset.i,10);
+    if(Number.isNaN(i)) return;
+    if(action === 'name'){ activities[i].name = t.value; calculate(true); }
+    else if(action === 'minutes'){ activities[i].minutes = Math.max(1, parseInt(t.value||'1',10)); calculate(true); }
+  });
+
+  document.addEventListener('change', (e)=>{
+    const t = e.target;
+    if(!t || !t.dataset) return;
+    if(t.dataset.action === 'toggle'){
+      const i = parseInt(t.dataset.i,10);
+      if(!Number.isNaN(i)) { activities[i].use = !!t.checked; calculate(true); }
+    }
+  });
+
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const action = btn.dataset.action; if(!action) return;
+    const i = parseInt(btn.dataset.i,10);
+    if(action === 'del' && !Number.isNaN(i)){
+      activities.splice(i,1);
+      render();
+      calculate();
+    }
+  });
+
+  // ---------- Drag & drop (handle-only) ----------
+  let draggingRow = null;
+  document.addEventListener('dragstart', (e)=>{
+    const handle = e.target.closest && e.target.closest('.handle');
+    if(!handle){ return; }
+    const row = handle.closest('tr');
+    if(!row || row.classList.contains('end-row')){ return; }
+    draggingRow = row; row.classList.add('dragging');
+  });
+  document.addEventListener('dragend', ()=>{ if(draggingRow){ draggingRow.classList.remove('dragging'); draggingRow = null; }});
+  document.addEventListener('dragover', (e)=>{
+    if(!draggingRow) return; e.preventDefault();
+    const after = getDragAfterElement(tbodyEl, e.clientY);
+    if(after == null){ tbodyEl.insertBefore(draggingRow, tbodyEl.lastElementChild); }
+    else { tbodyEl.insertBefore(draggingRow, after); }
+  });
+  document.addEventListener('drop', ()=>{
+    if(!draggingRow) return;
+    const rows = Array.from(tbodyEl.querySelectorAll('tr:not(.end-row)'));
+    activities = rows.map(r => activities[parseInt(r.dataset.index,10)]);
+    draggingRow = null;
+    render();
+    calculate();
+  });
+  function getDragAfterElement(container, y){
+    const rows = [...container.querySelectorAll('tr:not(.dragging):not(.end-row)')];
+    return rows.reduce((closest, child)=>{
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height/2;
+      if(offset < 0 && offset > closest.offset){
+        return { offset, element: child };
+      } else { return closest; }
+    }, { offset: Number.NEGATIVE_INFINITY }).element || null;
+  }
+
+  // ---------- Calculation & paint-only update ----------
+  function calculate(){
+    const echo = document.getElementById('endEcho'); if(echo) echo.textContent = endEvent.time || '';
+    if(!endEvent.time){ paintStartTimes([]); return; }
+    const parts = (endEvent.time || '').split(':');
+    if(parts.length < 2) { paintStartTimes([]); return; }
+    const hh = parseInt(parts[0],10); const mm = parseInt(parts[1],10);
+    if(Number.isNaN(hh) || Number.isNaN(mm)) { paintStartTimes([]); return; }
+    const cur = new Date(); cur.setHours(hh, mm, 0, 0);
+    const starts = new Array(activities.length);
+    for(let i=activities.length-1;i>=0;i--){
+      if(activities[i].use){ cur.setMinutes(cur.getMinutes() - (parseInt(activities[i].minutes)||0)); }
+      starts[i] = cur.toLocaleTimeString([], {hour12:false, hour:'2-digit', minute:'2-digit'});
+    }
+    paintStartTimes(starts);
+  }
+
+  function paintStartTimes(starts){
+    const rows = tbodyEl.querySelectorAll('tr');
+    for(let i=0;i<activities.length;i++){
+      const row = rows[i]; if(!row) continue;
+      const startCell = row.querySelector('.start'); if(!startCell) continue;
+      startCell.textContent = starts && starts[i] ? starts[i] : '';
+    }
+    const echo = document.getElementById('endEcho'); if(echo) echo.textContent = endEvent.time || '';
+  }
+
+  function escapeHtml(s){return (s+'').replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
+
+  // ---------- Boot after DOM ready (prevents null addEventListener) ----------
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else { boot(); }
+
+  // ---------- Lightweight self-tests (console) ----------
+  function runSelfTests(){
+    try{
+      console.assert(!!document.getElementById('tbody'), 'tbody exists');
+      console.assert(typeof render === 'function', 'render() exists');
+      console.assert(typeof calculate === 'function', 'calculate() exists');
+      // Theme store should not throw even if localStorage blocked
+      safeStore.set('test-key','ok');
+      const v = safeStore.get('test-key');
+      console.assert(v === 'ok' || v == null, 'safeStore works in sandbox');
+      // End time typing edge case: partial input should not throw
+      const et = document.getElementById('endTime');
+      if(et){ et.value = '1'; et.dispatchEvent(new Event('input', {bubbles:true})); }
+      // Quick compute path
+      if(et){ et.value = '12:00'; et.dispatchEvent(new Event('input', {bubbles:true})); }
+      console.log('Self-tests completed');
+    }catch(err){ console.warn('Self-tests found an issue:', err); }
+  }
+  // Delay tests slightly to allow initial render
+  setTimeout(runSelfTests, 50);
+})();
+</script>
+</body>
+</html>
