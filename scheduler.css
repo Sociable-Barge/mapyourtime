@@ -65,3 +65,91 @@ tr.dragging{opacity:.6}
 .muted{color:var(--muted);font-size:12px}
 .validation{min-height:1.2em;color:var(--danger);font-size:13px;margin-top:10px}
 .input-error{border-color:var(--danger) !important;box-shadow:0 0 0 1px color-mix(in srgb, var(--danger) 45%, transparent)}
+
+@media (max-width: 760px){
+  .app{padding:10px}
+  .header{
+    position:static;
+    margin:0 0 10px;
+    padding:0 0 10px;
+    border-bottom:1px solid var(--line);
+    display:block;
+  }
+  h1{font-size:18px}
+  .sub{font-size:13px}
+  .toggle{
+    margin-top:10px;
+    box-shadow:none;
+  }
+
+  .card{
+    background:transparent;
+    border:0;
+    box-shadow:none;
+    border-radius:0;
+    padding:0;
+  }
+  .controls-card{
+    border-bottom:1px solid var(--line);
+    padding-bottom:12px;
+    margin-bottom:10px;
+  }
+
+  .preset-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    margin-bottom:8px;
+  }
+  .preset-btn,.btn,.map-link{
+    min-height:44px;
+  }
+
+  .toolbar{
+    display:grid;
+    grid-template-columns:1fr 96px;
+    gap:8px;
+  }
+  #customName{
+    grid-column:1 / -1;
+  }
+  #addBtn{
+    grid-column:1 / -1;
+  }
+
+  .table-wrap{
+    margin-top:8px;
+    border:0;
+    background:transparent;
+  }
+  table{
+    min-width:560px;
+  }
+  th,td{
+    padding:8px 7px;
+  }
+
+  .map-card{
+    margin-top:10px;
+    border-top:1px solid var(--line);
+    padding-top:12px;
+  }
+  .map-toolbar{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  #mapFrom,#mapTo{
+    grid-column:1 / -1;
+    min-width:0;
+  }
+  #mapMode{
+    min-width:0;
+  }
+  #mapUpdateBtn,#mapOpenLink{
+    width:100%;
+    justify-content:center;
+  }
+  .map-frame{
+    height:240px;
+  }
+}
