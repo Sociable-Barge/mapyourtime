@@ -334,22 +334,23 @@
     tbodyEl.innerHTML = '';
 
     activities.forEach((a, i) => {
-      const tr = document.createElement('tr');
-      tr.dataset.index = i;
+      const row = document.createElement('div');
+      row.className = 'activity-card';
+      row.dataset.index = i;
       const startCellHtml = a.fixed
-        ? `<td class="start"><input type="text" placeholder="e.g., 4:00 PM" value="${escapeHtml(a.fixedTime || '')}" data-action="fixedtime" data-i="${i}" /></td>`
-        : `<td class="start" data-i="${i}"></td>`;
-      tr.innerHTML = `
-        <td>
+        ? `<div class="start"><input type="text" placeholder="e.g., 4:00 PM" value="${escapeHtml(a.fixedTime || '')}" data-action="fixedtime" data-i="${i}" /></div>`
+        : `<div class="start" data-i="${i}"></div>`;
+      row.innerHTML = `
+        <div>
           <span class="handle" title="Drag to reorder" draggable="true" aria-label="Drag handle">
             <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 5h2v2H7V5zm4 0h2v2h-2V5zM7 9h2v2H7V9zm4 0h2v2h-2V9zM7 13h2v2H7v-2zm4 0h2v2h-2v-2z"/></svg>
           </span>
-        </td>
-        <td class="col-activity"><input type="text" value="${escapeHtml(a.name)}" data-action="name" data-i="${i}" /></td>
-        <td class="col-minutes"><input type="number" min="1" value="${a.minutes}" data-action="minutes" data-i="${i}" /></td>
+        </div>
+        <div class="col-activity"><input type="text" value="${escapeHtml(a.name)}" data-action="name" data-i="${i}" /></div>
+        <div class="col-minutes"><input type="number" min="1" value="${a.minutes}" data-action="minutes" data-i="${i}" /></div>
         ${startCellHtml}
-        <td style="text-align:center"><input type="checkbox" data-action="fixedtoggle" data-i="${i}" ${a.fixed ? 'checked' : ''} aria-label="Fixed start time" /></td>
-        <td style="text-align:center">
+        <div style="text-align:center"><input type="checkbox" data-action="fixedtoggle" data-i="${i}" ${a.fixed ? 'checked' : ''} aria-label="Fixed start time" /></div>
+        <div style="text-align:center">
           <button class="icon-btn trash" data-action="del" data-i="${i}" aria-label="Delete">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polyline points="3 6 5 6 21 6"/>
@@ -358,20 +359,20 @@
               <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
             </svg>
           </button>
-        </td>`;
-      tbodyEl.appendChild(tr);
+        </div>`;
+      tbodyEl.appendChild(row);
     });
 
-    const endTr = document.createElement('tr');
-    endTr.className = 'end-row';
-    endTr.innerHTML = `
-      <td></td>
-      <td class="col-activity"><input type="text" value="${escapeHtml(endEvent.name)}" id="endName" /></td>
-      <td></td>
-      <td class="start"><input type="text" id="endTime" placeholder="e.g., 3:45 PM" /></td>
-      <td></td>
-      <td></td>`;
-    tbodyEl.appendChild(endTr);
+    const endRow = document.createElement('div');
+    endRow.className = 'activity-card end-row';
+    endRow.innerHTML = `
+      <div></div>
+      <div class="col-activity"><input type="text" value="${escapeHtml(endEvent.name)}" id="endName" /></div>
+      <div></div>
+      <div class="start"><input type="text" id="endTime" placeholder="e.g., 3:45 PM" /></div>
+      <div></div>
+      <div></div>`;
+    tbodyEl.appendChild(endRow);
 
     const endTimeInput = document.getElementById('endTime');
     if(endTimeInput && endEvent.time) endTimeInput.value = endEvent.time;
@@ -470,7 +471,7 @@
     const i = parseInt(t.dataset.i, 10);
     if(Number.isNaN(i) || !activities[i]) return;
 
-    const row = t.closest('tr');
+    const row = t.closest('.activity-card');
     const suggestedStart = row ? (row.querySelector('.start') && !row.querySelector('input[data-action="fixedtime"]')
       ? row.querySelector('.start').textContent.trim()
       : '') : '';
@@ -506,7 +507,7 @@
     const handle = e.target.closest && e.target.closest('.handle');
     if(!handle) return;
 
-    const row = handle.closest('tr');
+    const row = handle.closest('.activity-card');
     if(!row || row.classList.contains('end-row')) return;
 
     draggingRow = row;
@@ -535,7 +536,7 @@
   document.addEventListener('drop', ()=>{
     if(!draggingRow) return;
 
-    const rows = Array.from(tbodyEl.querySelectorAll('tr:not(.end-row)'));
+    const rows = Array.from(tbodyEl.querySelectorAll('.activity-card:not(.end-row)'));
     activities = rows.map((r) => activities[parseInt(r.dataset.index, 10)]);
     draggingRow = null;
     saveState();
@@ -544,7 +545,7 @@
   });
 
   function getDragAfterElement(container, y){
-    const rows = [...container.querySelectorAll('tr:not(.dragging):not(.end-row)')];
+    const rows = [...container.querySelectorAll('.activity-card:not(.dragging):not(.end-row)')];
     return rows.reduce((closest, child)=>{
       const box = child.getBoundingClientRect();
       const offset = y - box.top - box.height / 2;
@@ -628,7 +629,7 @@
   }
 
   function paintStartTimes(starts){
-    const rows = tbodyEl.querySelectorAll('tr');
+    const rows = tbodyEl.querySelectorAll('.activity-card');
     for(let i = 0; i < activities.length; i++){
       const row = rows[i];
       if(!row) continue;
