@@ -87,6 +87,7 @@ h1{font-size:24px;line-height:1.1;margin:0;letter-spacing:.2px}
 .activity-card{
   display:grid;
   grid-template-columns:32px minmax(280px,1fr) 110px 160px 80px 40px;
+  grid-template-areas:"handle activity minutes start fixed delete";
   gap:10px;
   align-items:center;
   background:var(--surface-soft);
@@ -94,6 +95,13 @@ h1{font-size:24px;line-height:1.1;margin:0;letter-spacing:.2px}
   border-radius:12px;
   padding:10px;
 }
+.activity-card > div{min-width:0}
+.card-handle{grid-area:handle}
+.card-activity{grid-area:activity}
+.card-minutes{grid-area:minutes}
+.card-start{grid-area:start}
+.card-fixed{grid-area:fixed;display:flex;align-items:center;justify-content:center}
+.card-delete{grid-area:delete;display:flex;justify-content:center}
 .activity-card.end-row{
   background:color-mix(in srgb,var(--surface-soft) 78%, var(--brand) 22%);
 }
@@ -101,7 +109,7 @@ h1{font-size:24px;line-height:1.1;margin:0;letter-spacing:.2px}
 
 .handle{cursor:grab;user-select:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;color:var(--muted)}
 .handle svg{width:16px;height:16px;display:block}
- .activity-card.dragging{opacity:.55}
+.activity-card.dragging{opacity:.55}
 .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
 .icon-btn:hover{background:var(--surface-soft)}
 .trash svg{width:17px;height:17px}
@@ -125,6 +133,7 @@ h1{font-size:24px;line-height:1.1;margin:0;letter-spacing:.2px}
   .list-head{display:none}
   .activity-card{
     grid-template-columns:32px minmax(0,1fr) 94px 130px 72px 36px;
+    grid-template-areas:"handle activity minutes start fixed delete";
     gap:8px;
   }
 }
@@ -144,20 +153,28 @@ h1{font-size:24px;line-height:1.1;margin:0;letter-spacing:.2px}
 
   .table-wrap{border:0;padding:0;background:transparent}
   .activity-card{
-    grid-template-columns:32px 1fr 1fr;
+    grid-template-columns:minmax(0,1fr) auto auto;
     grid-template-areas:
-      \"handle fixed delete\"
-      \"activity activity activity\"
-      \"minutes start start\";
+      "activity activity activity"
+      "minutes minutes minutes"
+      "start start start"
+      "handle fixed delete";
     gap:8px;
   }
-  .activity-card > :nth-child(1){grid-area:handle}
-  .activity-card > :nth-child(2){grid-area:activity}
-  .activity-card > :nth-child(3){grid-area:minutes}
-  .activity-card > :nth-child(4){grid-area:start}
-  .activity-card > :nth-child(5){grid-area:fixed;justify-self:end}
-  .activity-card > :nth-child(6){grid-area:delete;justify-self:end}
   .start{text-align:left}
+  .card-fixed,.card-delete{justify-content:flex-end}
+  .card-activity::before,.card-minutes::before,.card-start::before{
+    display:block;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.02em;
+    color:var(--muted);
+    margin:0 0 4px;
+    text-transform:uppercase;
+  }
+  .card-activity::before{content:"Activity"}
+  .card-minutes::before{content:"Minutes"}
+  .card-start::before{content:"Start Time"}
 
   .map-toolbar{grid-template-columns:1fr 1fr;gap:8px}
   #mapFrom,#mapTo{grid-column:1 / -1}

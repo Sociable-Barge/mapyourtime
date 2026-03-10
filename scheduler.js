@@ -338,19 +338,19 @@
       row.className = 'activity-card';
       row.dataset.index = i;
       const startCellHtml = a.fixed
-        ? `<div class="start"><input type="text" placeholder="e.g., 4:00 PM" value="${escapeHtml(a.fixedTime || '')}" data-action="fixedtime" data-i="${i}" /></div>`
-        : `<div class="start" data-i="${i}"></div>`;
+        ? `<div class="card-start start"><input type="text" placeholder="e.g., 4:00 PM" value="${escapeHtml(a.fixedTime || '')}" data-action="fixedtime" data-i="${i}" /></div>`
+        : `<div class="card-start start" data-i="${i}"></div>`;
       row.innerHTML = `
-        <div>
+        <div class="card-handle">
           <span class="handle" title="Drag to reorder" draggable="true" aria-label="Drag handle">
             <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 5h2v2H7V5zm4 0h2v2h-2V5zM7 9h2v2H7V9zm4 0h2v2h-2V9zM7 13h2v2H7v-2zm4 0h2v2h-2v-2z"/></svg>
           </span>
         </div>
-        <div class="col-activity"><input type="text" value="${escapeHtml(a.name)}" data-action="name" data-i="${i}" /></div>
-        <div class="col-minutes"><input type="number" min="1" value="${a.minutes}" data-action="minutes" data-i="${i}" /></div>
+        <div class="card-activity col-activity"><input type="text" value="${escapeHtml(a.name)}" data-action="name" data-i="${i}" /></div>
+        <div class="card-minutes col-minutes"><input type="number" min="1" value="${a.minutes}" data-action="minutes" data-i="${i}" /></div>
         ${startCellHtml}
-        <div style="text-align:center"><input type="checkbox" data-action="fixedtoggle" data-i="${i}" ${a.fixed ? 'checked' : ''} aria-label="Fixed start time" /></div>
-        <div style="text-align:center">
+        <div class="card-fixed"><input type="checkbox" data-action="fixedtoggle" data-i="${i}" ${a.fixed ? 'checked' : ''} aria-label="Fixed start time" /></div>
+        <div class="card-delete">
           <button class="icon-btn trash" data-action="del" data-i="${i}" aria-label="Delete">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polyline points="3 6 5 6 21 6"/>
@@ -366,12 +366,12 @@
     const endRow = document.createElement('div');
     endRow.className = 'activity-card end-row';
     endRow.innerHTML = `
-      <div></div>
-      <div class="col-activity"><input type="text" value="${escapeHtml(endEvent.name)}" id="endName" /></div>
-      <div></div>
-      <div class="start"><input type="text" id="endTime" placeholder="e.g., 3:45 PM" /></div>
-      <div></div>
-      <div></div>`;
+      <div class="card-handle"></div>
+      <div class="card-activity col-activity"><input type="text" value="${escapeHtml(endEvent.name)}" id="endName" /></div>
+      <div class="card-minutes"></div>
+      <div class="card-start start"><input type="text" id="endTime" placeholder="e.g., 3:45 PM" /></div>
+      <div class="card-fixed"></div>
+      <div class="card-delete"></div>`;
     tbodyEl.appendChild(endRow);
 
     const endTimeInput = document.getElementById('endTime');
