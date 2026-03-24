@@ -502,6 +502,15 @@
   });
 
   let draggingRow = null;
+  let touchDraggingRow = null;
+
+  function finalizeReorder(){
+    const rows = Array.from(tbodyEl.querySelectorAll('.activity-card:not(.end-row)'));
+    activities = rows.map((r) => activities[parseInt(r.dataset.index, 10)]);
+    saveState();
+    render();
+    calculate();
+  }
 
   document.addEventListener('dragstart', (e)=>{
     const handle = e.target.closest && e.target.closest('.handle');
@@ -536,12 +545,47 @@
   document.addEventListener('drop', ()=>{
     if(!draggingRow) return;
 
-    const rows = Array.from(tbodyEl.querySelectorAll('.activity-card:not(.end-row)'));
-    activities = rows.map((r) => activities[parseInt(r.dataset.index, 10)]);
     draggingRow = null;
-    saveState();
-    render();
-    calculate();
+    finalizeReorder();
+  });
+
+  document.addEventListener('touchstart', (e)=>{
+    const handle = e.target.closest && e.target.closest('.handle');
+    if(!handle) return;
+
+    const row = handle.closest('.activity-card');
+    if(!row || row.classList.contains('end-row')) return;
+
+    touchDraggingRow = row;
+    row.classList.add('dragging');
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e)=>{
+    if(!touchDraggingRow) return;
+    const touch = e.touches && e.touches[0];
+    if(!touch) return;
+
+    e.preventDefault();
+    const after = getDragAfterElement(tbodyEl, touch.clientY);
+    if(after == null){
+      tbodyEl.insertBefore(touchDraggingRow, tbodyEl.lastElementChild);
+    } else {
+      tbodyEl.insertBefore(touchDraggingRow, after);
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', ()=>{
+    if(!touchDraggingRow) return;
+    touchDraggingRow.classList.remove('dragging');
+    touchDraggingRow = null;
+    finalizeReorder();
+  });
+
+  document.addEventListener('touchcancel', ()=>{
+    if(!touchDraggingRow) return;
+    touchDraggingRow.classList.remove('dragging');
+    touchDraggingRow = null;
+    finalizeReorder();
   });
 
   function getDragAfterElement(container, y){

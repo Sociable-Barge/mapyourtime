@@ -31,6 +31,7 @@ body{
   color:var(--ink);
   font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;
 }
+input,select,button,textarea{font:inherit}
 
 .app{max-width:none;margin:0;padding:20px 16px 24px}
 .header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
@@ -107,7 +108,7 @@ h1{font-size:24px;line-height:1.1;margin:0;letter-spacing:.2px}
 }
 .start{white-space:nowrap;text-align:center;color:var(--muted);font-weight:600}
 
-.handle{cursor:grab;user-select:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;color:var(--muted)}
+.handle{cursor:grab;user-select:none;touch-action:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;color:var(--muted)}
 .handle svg{width:16px;height:16px;display:block}
 .activity-card.dragging{opacity:.55}
 .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
@@ -139,13 +140,23 @@ h1{font-size:24px;line-height:1.1;margin:0;letter-spacing:.2px}
 }
 
 @media (max-width: 700px){
-  .app{padding:12px 10px 16px}
+  .app{padding:8px 6px 12px}
   h1{font-size:21px}
   .sub{font-size:13px}
 
-  .card{padding:10px;border-radius:12px}
+  .card{padding:8px;border-radius:10px}
   .preset-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .preset-btn,.btn,.map-link{min-height:44px}
+  .toolbar input[type="text"],
+  .toolbar input[type="number"],
+  .activity-card input[type="text"],
+  .activity-card input[type="number"],
+  .map-toolbar input,
+  .map-toolbar select,
+  .btn,
+  .preset-btn{
+    font-size:16px;
+  }
 
   .toolbar{grid-template-columns:minmax(0,1fr) 96px}
   #customName{grid-column:1 / -1}
