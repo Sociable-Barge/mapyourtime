@@ -101,8 +101,9 @@ h1{font-size:24px;line-height:1.1;margin:0;letter-spacing:.2px}
 .card-activity{grid-area:activity}
 .card-minutes{grid-area:minutes}
 .card-start{grid-area:start}
-.card-fixed{grid-area:fixed;display:flex;align-items:center;justify-content:center}
+.card-fixed{grid-area:fixed;display:flex;align-items:center;justify-content:flex-start}
 .card-delete{grid-area:delete;display:flex;justify-content:center}
+.fixed-toggle{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.01em}
 .activity-card.end-row{
   background:color-mix(in srgb,var(--surface-soft) 78%, var(--brand) 22%);
 }
@@ -164,23 +165,35 @@ h1{font-size:24px;line-height:1.1;margin:0;letter-spacing:.2px}
 
   .table-wrap{border:0;padding:0;background:transparent}
   .activity-card{
-    grid-template-columns:28px auto auto minmax(92px,26%);
+    grid-template-columns:28px minmax(104px,1fr) auto minmax(84px,26%);
     grid-template-areas:
-      "handle fixed delete start"
+      "handle start fixed delete"
       "activity activity activity minutes";
     gap:6px 8px;
     padding:8px;
   }
   .card-handle,.card-fixed,.card-delete{align-self:start}
-  .card-fixed,.card-delete{justify-content:center}
+  .card-delete{justify-content:flex-end}
   .card-start{
-    justify-self:end;
+    justify-self:start;
     align-self:start;
     width:100%;
-    text-align:right;
+    text-align:left;
   }
   .card-minutes input[type="number"]{text-align:left}
-  .card-activity::before,.card-minutes::before,.card-start::before{content:none}
+  .card-activity::before,.card-minutes::before,.card-start::before{
+    display:block;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.02em;
+    color:var(--muted);
+    margin:0 0 2px;
+    text-transform:uppercase;
+    opacity:.9;
+  }
+  .card-activity::before{content:"Activity"}
+  .card-minutes::before{content:"Minutes"}
+  .card-start::before{content:"Start Time"}
 
   .map-toolbar{grid-template-columns:1fr 1fr;gap:8px}
   #mapFrom,#mapTo{grid-column:1 / -1}

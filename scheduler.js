@@ -349,7 +349,12 @@
         <div class="card-activity col-activity"><input type="text" value="${escapeHtml(a.name)}" data-action="name" data-i="${i}" /></div>
         <div class="card-minutes col-minutes"><input type="number" min="1" value="${a.minutes}" data-action="minutes" data-i="${i}" /></div>
         ${startCellHtml}
-        <div class="card-fixed"><input type="checkbox" data-action="fixedtoggle" data-i="${i}" ${a.fixed ? 'checked' : ''} aria-label="Fixed start time" /></div>
+        <div class="card-fixed">
+          <label class="fixed-toggle">
+            <input type="checkbox" data-action="fixedtoggle" data-i="${i}" ${a.fixed ? 'checked' : ''} aria-label="Fixed start time" />
+            <span>Fixed</span>
+          </label>
+        </div>
         <div class="card-delete">
           <button class="icon-btn trash" data-action="del" data-i="${i}" aria-label="Delete">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
