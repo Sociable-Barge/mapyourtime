@@ -144,7 +144,7 @@ h1{font-size:24px;line-height:1.1;margin:0;letter-spacing:.2px}
   h1{font-size:21px}
   .sub{font-size:13px}
 
-  .card{padding:8px;border-radius:10px}
+  .card{padding:6px;border-radius:10px}
   .preset-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .preset-btn,.btn,.map-link{min-height:44px}
   .toolbar input[type="text"],
@@ -164,28 +164,23 @@ h1{font-size:24px;line-height:1.1;margin:0;letter-spacing:.2px}
 
   .table-wrap{border:0;padding:0;background:transparent}
   .activity-card{
-    grid-template-columns:minmax(0,1fr) auto auto;
+    grid-template-columns:28px auto auto minmax(92px,26%);
     grid-template-areas:
-      "activity activity activity"
-      "minutes minutes minutes"
-      "start start start"
-      "handle fixed delete";
-    gap:8px;
+      "handle fixed delete start"
+      "activity activity activity minutes";
+    gap:6px 8px;
+    padding:8px;
   }
-  .start{text-align:left}
-  .card-fixed,.card-delete{justify-content:flex-end}
-  .card-activity::before,.card-minutes::before,.card-start::before{
-    display:block;
-    font-size:11px;
-    font-weight:700;
-    letter-spacing:.02em;
-    color:var(--muted);
-    margin:0 0 4px;
-    text-transform:uppercase;
+  .card-handle,.card-fixed,.card-delete{align-self:start}
+  .card-fixed,.card-delete{justify-content:center}
+  .card-start{
+    justify-self:end;
+    align-self:start;
+    width:100%;
+    text-align:right;
   }
-  .card-activity::before{content:"Activity"}
-  .card-minutes::before{content:"Minutes"}
-  .card-start::before{content:"Start Time"}
+  .card-minutes input[type="number"]{text-align:left}
+  .card-activity::before,.card-minutes::before,.card-start::before{content:none}
 
   .map-toolbar{grid-template-columns:1fr 1fr;gap:8px}
   #mapFrom,#mapTo{grid-column:1 / -1}
